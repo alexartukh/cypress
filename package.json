@@ -1,0 +1,16 @@
+{
+  "name": "cy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cypress": "^15.20.1",
+    "mysql2": "^3.23.3",
+    "ssh2": "^1.17.0"
+  }
+}
