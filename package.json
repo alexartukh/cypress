@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "cy:open": "cypress open",
+    "test": "cypress run"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "DRAFT: early Cypress experiments against a local e-commerce shop, including an order check in MySQL via an SSH tunnel",
   "dependencies": {
     "cypress": "^15.20.1",
     "mysql2": "^3.23.3",

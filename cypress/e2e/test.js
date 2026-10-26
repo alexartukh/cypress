@@ -1,23 +1,23 @@
 const { Client } = require('ssh2');
+const fs = require('fs');
 const mysql = require('mysql2/promise');
 
-// 1. Конфигурация SSH-сервера
+// Connection settings are read from environment variables (see README).
+// No passwords or key paths are stored in the repository.
 const sshConfig = {
-  host: '127.0.0.1',       // IP или домен вашего SSH-сервера
-  port: 2222,
-  username: 'vagrant',
-  // Используйте пароль ИЛИ приватный ключ (рекомендуется):
-  // password: 'ssh_password',
-  privateKey: require('fs').readFileSync('C:/PRO/box/.vagrant/machines/default/virtualbox/private_key') 
+  host: process.env.SSH_HOST || '127.0.0.1',
+  port: Number(process.env.SSH_PORT || 2222),
+  username: process.env.SSH_USER || 'vagrant',
+  privateKeyPath: process.env.SSH_KEY_PATH,      // path to the private key of the Vagrant VM
 };
 
-// 2. Конфигурация MySQL (как ее видит SSH-сервер)
+// MySQL as seen from inside the SSH server
 const dbConfig = {
-  host: '127.0.0.1',           // Обычно 127.0.0.1, если БД на том же сервере, что и SSH
-  port: 3306,
-  user: 'root',
-  password: 'root',
-  database: 'cs_std131001'
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 };
 
 
@@ -43,7 +43,13 @@ function createSshTunnel(sshConf, dbConf) {
     });
 
     sshClient.on('error', reject);
-    sshClient.connect(sshConf);
+    const connectOptions = {
+      host: sshConf.host,
+      port: sshConf.port,
+      username: sshConf.username,
+      privateKey: fs.readFileSync(sshConf.privateKeyPath),   // read only when a tunnel is actually needed
+    };
+    sshClient.connect(connectOptions);
   });
 }
 
