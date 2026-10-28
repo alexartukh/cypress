@@ -1,16 +1,29 @@
 {
-  "name": "cy",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "cypress": "^15.20.1",
-    "mysql2": "^3.23.3",
-    "ssh2": "^1.17.0"
-  }
+    "name": "cypress-tester",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "cy:open": "cypress open",
+        "test": "cypress run",
+        "test:smoke": "cypress run --expose grepTags=@smoke"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/alexartukh/cypress.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "bugs": {
+        "url": "https://github.com/alexartukh/cypress/issues"
+    },
+    "homepage": "https://github.com/alexartukh/cypress#readme",
+    "devDependencies": {
+        "@cypress/grep": "^7.0.0",
+        "@types/node": "^26.6.6",
+        "cypress": "^16.2.1",
+        "typescript": "^7.0.2"
+    }
 }
