@@ -65,7 +65,6 @@ npx cypress run --expose lang=de,grepTags=@smoke  # combined
 | `@smoke` | minimal "site is alive" set |
 | `@advanced` | requires a logged-in user |
 | `@screentest` | visual tests |
-| `@a11y` | accessibility checks |
 
 Tags are implemented with the official [`@cypress/grep`](https://www.npmjs.com/package/@cypress/grep) plugin.
 Tags come from constants in `cypress/support/tags.ts`, so the plugin filters at run time:
