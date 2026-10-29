@@ -1,112 +1,119 @@
-// import { test, expect } from './fixtures'; // replacement for an initial '@playwright/test'; 
-// import { getRandomEmail, makeAttachment } from './utils';
-// import { TAGS } from './tags';
+import { TAGS } from '../support/tags';
+import { getRandomEmail } from '../support/utils';
+import { HomePage } from '../pages/home.page';
+import { LoginPage } from '../pages/login.page';
+import { ProductDetailsPage } from '../pages/product.details.page';
+import { BillingAddressPage } from '../pages/billing.address.page';
+import { PaymentPage } from '../pages/payment.page';
 
-// test.describe('place order', () => {
-//     test.describe.configure({ mode: 'default' });
+describe('place order', function () {
+    const homePage = new HomePage();
+    const loginPage = new LoginPage();
+    const productDetailsPage = new ProductDetailsPage();
+    const billingPage = new BillingAddressPage();
+    const paymentPage = new PaymentPage();
 
-//     test.beforeEach(async ({ homePage, lang }) => {
-//         await homePage.selectLanguage(lang);
-//     });
+    beforeEach(function () {
+        const lang: string = Cypress.expose('lang'); // 'en' из конфига или из --expose lang=de
+        homePage.selectLanguage(lang);
+    });
 
-//     test('place order as a registered user', { tag: TAGS.advanced }, async ({ page, homePage, loginPage, productDetailsPage, billingPage, paymentPage }, testInfo) => {
-//         const email = getRandomEmail();
-//         const password = 'wordPASS123!';
+    it('place order as a registered user', { tags: TAGS.advanced }, function () {
+        // обычные функции — значения сразу, .then() не нужен
+        const email: string = getRandomEmail();
+        const password: string = 'wordPASS123!';
 
-//         await makeAttachment(testInfo, 'init', `login = ${email}, password = ${password}`);
+        cy.log(`login = ${email}, password = ${password}`); // вместо makeAttachment
 
-//         // from login page to registration page
-//         await page.goto('https://practicesoftwaretesting.com/auth/login');
-//         await page.locator('a[data-test="register-link"]').click();
-//         await page.locator('input#first_name').fill('Alex');
-//         await page.locator('input#last_name').fill('Artukh');
-//         await page.locator('input#dob').fill('1983-04-23');
-//         await page.locator('select#country').selectOption('UA');
-//         await page.locator('input#postal_code').fill('14034');
-//         await page.locator('input#house_number').fill('2');
-//         await page.locator('input#street').fill('Berezovskogo');
-//         await page.locator('input#city').fill('Chernihiv');
-//         await page.locator('input#state').fill('Chernihiv');
-//         await page.locator('input#phone').fill('601267');
-//         await page.locator('input#email').fill(email);
-//         await page.locator('input#password').fill(password);
-//         await page.locator('[data-test="register-submit"]').click();
-//         await expect(page.locator('a[data-test="register-link"]')).toBeVisible();
+        // from login page to registration page
+        cy.visit(loginPage.url);
+        cy.get('a[data-test="register-link"]').click();
+        cy.get('input#first_name').type('Alex');
+        cy.get('input#last_name').type('Artukh');
+        cy.get('input#dob').type('1983-04-23');
+        cy.get('select#country').select('UA');                 // selectOption → select
+        cy.get('input#postal_code').type('14034');
+        cy.get('input#house_number').type('2');
+        cy.get('input#street').type('Berezovskogo');
+        cy.get('input#city').type('Chernihiv');
+        cy.get('input#state').type('Chernihiv');
+        cy.get('input#phone').type('601267');
+        cy.get('input#email').type(email);
+        cy.get('input#password').type(password);
+        cy.get('[data-test="register-submit"]').click();
+        cy.get('a[data-test="register-link"]').should('be.visible'); // вернулись на страницу логина
 
-//         // login page again
-//         await loginPage.login(email, password);
+        // login page again
+        loginPage.login(email, password);
 
-//         // home
-//         await homePage.goHomeAndUseFirstAvailableProduct();
+        // home
+        homePage.goHomeAndUseFirstAvailableProduct();
 
-//         // PDP
-//         await productDetailsPage.addToEmptyCartWithDefaultQuantity();
-//         await productDetailsPage.goToCartViaHeader();
+        // PDP
+        productDetailsPage.addToEmptyCartWithDefaultQuantity();
+        productDetailsPage.goToCartViaHeader();
 
-//         // cart
-//         await page.locator('button[data-test="proceed-1"]').click();
-//         await expect(page.locator('[data-test="proceed-2"]')).toBeVisible();
+        // cart
+        cy.get('button[data-test="proceed-1"]').click();
+        cy.get('[data-test="proceed-2"]').should('be.visible');
 
-//         // step 2 (login or guest)
-//         await page.locator('[data-test="proceed-2"]').click();
-//         await expect(page.locator('[data-test="proceed-3"]')).toBeVisible();
+        // step 2 (login or guest)
+        cy.get('[data-test="proceed-2"]').click();
+        cy.get('[data-test="proceed-3"]').should('be.visible');
 
-//         // step 3 (billing address)
-//         await billingPage.fillAddress('US', '60601', '100');
-//         await billingPage.continue();
+        // step 3 (billing address)
+        billingPage.fillAddress('US', '60601', '100');
+        billingPage.continue();
 
-//         // step 4 (payment)
-//         await paymentPage.useCC('4111-1111-1111-1111', '12/2027', '123', 'ALEX ARTUKH');
-//         await paymentPage.placeOrder();
+        // step 4 (payment)
+        paymentPage.useCC('4111-1111-1111-1111', '12/2027', '123', 'ALEX ARTUKH');
+        paymentPage.placeOrder();
 
-//         // Thanks for your order! Your invoice number is INV-2026000018.
-//         const line = await page.locator('div#order-confirmation').innerText();
+        // Thanks for your order! Your invoice number is INV-2026000018.
+        // innerText() → invoke('text'), значение приходит в .then()
+        cy.get('div#order-confirmation').invoke('text').then(function (line) {
+            cy.log(`Res = ${line}`);
+        });
+    });
 
-//         await makeAttachment(testInfo, 'order', `Res = ${line}`);
-//     });
+    it('place order as a guest', { tags: TAGS.smoke }, function () {
+        const email: string = getRandomEmail();
 
-//     //
-//     //
-//     //
+        cy.log(`login = ${email}`);
 
-//     test('place order as a guest', { tag: TAGS.smoke }, async ({ page, homePage, productDetailsPage, billingPage, paymentPage }, testInfo) => {
-//         const email = getRandomEmail();
+        // home
+        homePage.goHomeAndUseFirstAvailableProduct();
 
-//         // log for UI mode
-//         await makeAttachment(testInfo, 'init', `login = ${email}`);
+        // PDP
+        productDetailsPage.addToEmptyCartWithDefaultQuantity();
+        productDetailsPage.goToCartViaHeader();
 
-//         // home
-//         await homePage.goHomeAndUseFirstAvailableProduct();
+        // cart
+        cy.get('button[data-test="proceed-1"]').click();
+        cy.get('a[href="#guest-tab"]').should('be.visible');
 
-//         // PDP
-//         await productDetailsPage.addToEmptyCartWithDefaultQuantity();
-//         await productDetailsPage.goToCartViaHeader();
+        // step 2 (login or guest)
+        cy.get('a[href="#guest-tab"]').click();
+        cy.get('input#guest-last-name').should('be.visible');
+        cy.get('input#guest-email').type(email);
+        cy.get('input#guest-first-name').type('Alex');
+        cy.get('input#guest-last-name').type('Artukh');
+        cy.get('input[data-test="guest-submit"]').click();
+        cy.get('[data-test="proceed-2-guest"]').should('be.visible');
+        cy.get('[data-test="proceed-2-guest"]').click();
+        cy.get('button[data-test="proceed-3"]').should('be.visible');
 
-//         // cart
-//         await page.locator('button[data-test="proceed-1"]').click();
-//         await expect(page.locator('a[href="#guest-tab"]')).toBeVisible();
+        // step 3 (billing address)
+        billingPage.fillAddress('US', '60601', '100');
+        billingPage.continue();
 
-//         // step 2 (login or guest)
-//         await page.locator('a[href="#guest-tab"]').click();
-//         await expect(page.locator('input#guest-last-name')).toBeVisible();
-//         await page.locator('input#guest-email').fill(email);
-//         await page.locator('input#guest-first-name').fill('Alex');
-//         await page.locator('input#guest-last-name').fill('Artukh');
-//         await page.locator('input[data-test="guest-submit"]').click();
-//         await expect(page.locator('[data-test="proceed-2-guest"]')).toBeVisible();
-//         await page.locator('[data-test="proceed-2-guest"]').click();
-//         await expect(page.locator('button[data-test="proceed-3"]')).toBeVisible();
+        // step 4 (payment)
+        paymentPage.useCC('4111-1111-1111-1111', '12/2027', '123', 'ALEX ARTUKH');
+        paymentPage.placeOrder();
 
-//         // step 3 (billing address)
-//         await billingPage.fillAddress('US', '60601', '100');
-//         await billingPage.continue();
-
-//         // step 4 (payment)
-//         await paymentPage.useCC('4111-1111-1111-1111', '12/2027', '123', 'ALEX ARTUKH');
-//         await paymentPage.placeOrder();
-
-//         // Thanks for your order! Your invoice number is INV-2026000018.
-//         const line = await page.locator('div#order-confirmation').innerText();
-//         await makeAttachment(testInfo, 'order', `Res = ${line}`);
-//     });
-// });
+        // Thanks for your order! Your invoice number is INV-2026000018.
+        cy.get('div#order-confirmation').invoke('text').then(function (line) {
+            cy.log(`Res = ${line}`);
+        });
+    });
+});

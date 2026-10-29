@@ -22,7 +22,7 @@ a public e-commerce site made for test automation practice. No local environment
 | Search with mocked "out of stock" response | ✅ | in progress |
 | Place an order (registered user / guest) | ✅ | in progress |
 | Cart total calculation | ✅ | planned |
-| Accessibility (axe-core) | ✅ | planned (`cypress-axe`) |
+| Accessibility (ARIA labels, axe-core) | ✅ | not ported |
 | Visual comparison of toasts | ✅ | planned (plugin needed) |
 
 ## Project structure
