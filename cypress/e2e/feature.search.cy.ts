@@ -25,12 +25,11 @@ describe('search from a home page', { tags: TAGS.smoke }, function () {
         });
     }
 
-    //     // вторая группа параметризированных тестов
-    //     for (const searchCase of searchCases) {
-    //         test(`search for "${searchCase.param}" but everything is OOS`, async ({ homePage }) => {
-    //             await homePage.searchForSomethingButOOS(searchCase.param);
-    //             await expect(homePage.cards).toHaveCount(searchCase.expectedResult);
-    //             await expect(homePage.getOOSProductTiles()).toHaveCount(searchCase.expectedResult);
-    //         });
-    //     }
+    for (const searchCase of searchCases) {
+        it(`search for "${searchCase.param}" but everything is OOS`, function() {
+            homePage.searchForSomethingButOOS(searchCase.param);
+            cy.get(homePage.cards).should('have.length', searchCase.expectedResult);
+            homePage.getOOSProductTiles().should('have.length', searchCase.expectedResult);
+        });
+    }
 });

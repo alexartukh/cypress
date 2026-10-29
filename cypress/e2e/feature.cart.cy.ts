@@ -1,55 +1,66 @@
-// import { test, expect } from './fixtures'; // replacement for an initial '@playwright/test'; 
-// import { makeAttachment } from './utils';
-// import { TAGS } from './tags';
+import { TAGS } from '../support/tags';
+import { HomePage } from '../pages/home.page';
+import { ProductDetailsPage } from '../pages/product.details.page';
 
-// test.describe('cart calculations', { tag: TAGS.advanced }, () => {
-//     test.beforeEach(async ({ homePage, lang }) => {
-//         await homePage.selectLanguage(lang);
-//     });
+describe('cart calculations', { tags: TAGS.advanced }, function () {
+    const homePage = new HomePage();
+    const productDetailsPage = new ProductDetailsPage();
 
-//     function parsePrice(text: string): number {
-//         const matchRes = text.match(/^\$([\d.]+)$/);
-//         expect(matchRes, `cannot parse price "${text}"`).not.toBeNull();
-//         return Number(matchRes![1]);
-//     }
+    beforeEach(function () {
+        const lang: string = Cypress.expose('lang'); // 'en' из конфига или из --expose lang=de
+        homePage.selectLanguage(lang);
+    });
 
-//     test('correct cart total', async ({ page, homePage, productDetailsPage }, testInfo) => {
-//         await homePage.searchFor('Hammer');
-//         await homePage.cards.first().click();
-//         await productDetailsPage.addToEmptyCartWithDefaultQuantity();
+    // обычная функция, не cy-команда: значение возвращается сразу
+    function parsePrice(text: string): number {
+        const matchRes: RegExpMatchArray | null = text.trim().match(/^\$([\d.]+)$/);
+        expect(matchRes, `cannot parse price "${text}"`).to.not.equal(null);   // Chai вместо not.toBeNull()
+        return Number(matchRes![1]);
+    }
 
-//         await page.goto(homePage.url);
-//         await homePage.searchFor('Hammer');
-//         await homePage.cards.nth(1).click();
-//         await productDetailsPage.addToNonEmptyCartWithDefaultQuantity('2');
+    it('correct cart total', function () {
+        homePage.searchFor('Hammer');
+        cy.get(homePage.cards).first().click();
+        productDetailsPage.addToEmptyCartWithDefaultQuantity();
 
-//         await page.goto(homePage.url);
-//         await homePage.searchFor('Hammer');
-//         await homePage.cards.nth(2).click();
-//         await productDetailsPage.addToNonEmptyCartWithDefaultQuantity('3');
+        cy.visit(homePage.url);                             // page.goto → cy.visit
+        homePage.searchFor('Hammer');
+        cy.get(homePage.cards).eq(1).click();               // nth(1) → eq(1)
+        productDetailsPage.addToNonEmptyCartWithDefaultQuantity('2');
 
-//         await productDetailsPage.goToCartViaHeader();
-//         const rows = page.locator('app-cart tbody tr');
-//         await expect(rows).toHaveCount(3);
+        cy.visit(homePage.url);
+        homePage.searchFor('Hammer');
+        cy.get(homePage.cards).eq(2).click();
+        productDetailsPage.addToNonEmptyCartWithDefaultQuantity('3');
 
-//         let aText: string = '';
+        productDetailsPage.goToCartViaHeader();
 
-//         let sum: number = 0;
-//         const positions = await page.locator('app-cart tbody tr').count();
-//         for (let idx = 0; idx < positions; idx++) {
-//             const price = await rows.nth(idx).locator('td:nth-child(4)').innerText();
-//             aText += `${idx} = ${price}\n`;
-//             sum += parsePrice(price);
-//         }
+        // как toHaveCount(3): ждёт, пока все три позиции появятся
+        cy.get('app-cart tbody tr').should('have.length', 3);
 
-//         const total = await page.locator('app-cart tfoot tr td:nth-child(4)').innerText();
-//         aText += '-------------\n';
-//         aText += `TOTAL = ${total}\n`;
-//         const sum2 = parsePrice(total);
+        // 1. цены строк: в Playwright был цикл с await innerText(), здесь всё читается в одном .then()
+        cy.get('app-cart tbody tr').then(function ($rows) {
+            const rows: HTMLElement[] = $rows.toArray();    // jQuery → обычный массив DOM-элементов
 
-//         await makeAttachment(testInfo, 'numbers', aText);
+            let aText: string = '';
+            let sum: number = 0;
+            for (let idx = 0; idx < rows.length; idx++) {
+                const priceCell: HTMLElement | null = rows[idx].querySelector('td:nth-child(4)');
+                const price: string = priceCell !== null ? (priceCell.textContent || '').trim() : '';
+                aText += `${idx} = ${price}\n`;
+                sum += parsePrice(price);
+            }
 
-//         expect(sum2).toBeCloseTo(sum, 2);
-//     });
+            // 2. итог корзины: ещё одна команда, её значение — во вложенном .then()
+            cy.get('app-cart tfoot tr td:nth-child(4)').invoke('text').then(function (total: string) {
+                aText += '-------------\n';
+                aText += `TOTAL = ${total.trim()}\n`;
+                const sum2: number = parsePrice(total);
 
-// });
+                cy.log(aText);                               // вместо makeAttachment: сначала данные…
+
+                expect(sum2).to.be.closeTo(sum, 0.01);       // …потом проверка; toBeCloseTo(sum, 2) → closeTo(sum, 0.01)
+            });
+        });
+    });
+});

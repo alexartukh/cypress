@@ -1,5 +1,6 @@
 import { defineConfig } from "cypress";
 import { plugin as cypressGrepPlugin } from "@cypress/grep/plugin";
+import { addMatchImageSnapshotPlugin } from "@simonsmith/cypress-image-snapshot/plugin";
 
 export default defineConfig({
     e2e: {
@@ -16,6 +17,7 @@ export default defineConfig({
 
         setupNodeEvents(on, config) {
             cypressGrepPlugin(config); // нужен для фильтрации файлов
+            addMatchImageSnapshotPlugin(on); // сравнение картинок выполняется в Node
             return config;
         },
     },

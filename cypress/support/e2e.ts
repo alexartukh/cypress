@@ -16,5 +16,7 @@
 // Import commands.js using ES2015 syntax:
 import './commands'
 import { register as registerCypressGrep } from '@cypress/grep';
+import { addMatchImageSnapshotCommand } from '@simonsmith/cypress-image-snapshot/command';
 
 registerCypressGrep(); // учит describe/it понимать { tags: ... }
+addMatchImageSnapshotCommand(); // добавляет .matchImageSnapshot() — сравнение с эталонной картинкой

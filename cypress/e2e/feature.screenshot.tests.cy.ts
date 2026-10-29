@@ -1,36 +1,45 @@
-// import { test, expect } from './fixtures'; // replacement for an initial '@playwright/test'; 
-// import { TAGS } from './tags';
+import { TAGS } from '../support/tags';
+import { HomePage } from '../pages/home.page';
+import { ProductDetailsPage } from '../pages/product.details.page';
 
-// test.describe('Screenshot tests', { tag: TAGS.screentest }, () => {
-//     test.beforeEach(async ({ homePage, lang }) => {
-//         await homePage.selectLanguage(lang);
-//     });
+describe('Screenshot tests', { tags: TAGS.screentest }, function () {
+    const homePage = new HomePage();
+    const productDetailsPage = new ProductDetailsPage();
 
-//     test('add to cart many times', async ({ page, homePage, productDetailsPage }) => {
-//         // home
-//         await homePage.goHomeAndUseFirstAvailableProduct();
+    beforeEach(function () {
+        const lang: string = Cypress.expose('lang'); // 'en' из конфига или из --expose lang=de
+        homePage.selectLanguage(lang);
+    });
 
-//         // PDP
-//         await productDetailsPage.addToEmptyCartWithDefaultQuantity();
-//         await page.waitForTimeout(1500); // intentional: toasts must appear at different times to disappear one by one
-//         await productDetailsPage.addToNonEmptyCartWithDefaultQuantity('2');
- 
-//         // Если быстро добавлять продукты, то на экране будет несколько зеленых подтверждений в правом верхнем углу
-//         // нужно визуально проверить, что их там несколько
+    it('add to cart many times', function () {
+        // home
+        homePage.goHomeAndUseFirstAvailableProduct();
 
-//         const toasts = page.locator('div#toast-container div[role="alert"]');
-//         // их 2 одновременно
-//         await expect(toasts).toHaveCount(2);
+        // PDP
+        productDetailsPage.addToEmptyCartWithDefaultQuantity();
+        cy.wait(1500); // intentional: toasts must appear at different times to disappear one by one
+        productDetailsPage.addToNonEmptyCartWithDefaultQuantity('2');
 
-//         const toastContainer = page.locator('div#toast-container');
-//         const screenshotOptions = {
-//             maxDiffPixelRatio: 0.10,
-//             // maxDiffPixelRatio: 0.0, // A 100% match does not work because each toast has a progress bar (animated)  
-//         };
-//         await expect(toastContainer).toHaveScreenshot('toasts-stack.png', screenshotOptions);
+        // Если быстро добавлять продукты, то на экране будет несколько зеленых подтверждений в правом верхнем углу
+        // нужно визуально проверить, что их там несколько
+        const toastsSelector: string = 'div#toast-container div[role="alert"]';
 
-//         // они исчезли по одному
-//         await expect(toasts).toHaveCount(1);
-//         await expect(toasts).toHaveCount(0);
-//     });
-// });
+        // их 2 одновременно
+        cy.get(toastsSelector).should('have.length', 2);
+
+        // В Playwright эталон хранился отдельно для каждого проекта (Chrome-EN, Firefox-DE...).
+        // В Cypress проектов нет, поэтому браузер и язык добавляем в имя эталона сами.
+        const lang: string = Cypress.expose('lang');
+        const snapshotName: string = `toasts-stack-${Cypress.browser.name}-${lang}`;
+        const snapshotOptions = {
+            failureThreshold: 0.10,                // как maxDiffPixelRatio: 0.10
+            failureThresholdType: 'percent' as const, // 0.10 — доля пикселей (10%), а не их количество
+            // A 100% match does not work because each toast has a progress bar (animated)
+        };
+        cy.get('div#toast-container').matchImageSnapshot(snapshotName, snapshotOptions);
+
+        // они исчезли по одному (плашка живёт несколько секунд, поэтому таймаут больше обычного)
+        cy.get(toastsSelector, { timeout: 10000 }).should('have.length', 1);
+        cy.get(toastsSelector, { timeout: 10000 }).should('have.length', 0);
+    });
+});

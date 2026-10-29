@@ -48,7 +48,7 @@ export class HomePage {
     }
 
     getOOSProductTiles() {
-        return cy.get(this.cards).filter(`:has(${this.oosSection})`);
+        return cy.get(`${this.cards}:has(${this.oosSection})`);
     }
 
     selectLanguage(lang: string) {
