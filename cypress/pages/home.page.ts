@@ -9,7 +9,7 @@ export class HomePage {
     readonly nextPageSelector: string = '#quantity-input';
 
     searchFor(str: string) {
-        cy.intercept('GET', '**/products/search**').as('search');
+        cy.intercept('**/products/search**').as('search');
         cy.get(this.searchInput).clear().type(str);
         cy.get(this.searchButton).click();
         cy.wait('@search'); // ждём ответ с именем 'search'
