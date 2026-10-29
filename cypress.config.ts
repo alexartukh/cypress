@@ -10,6 +10,9 @@ export default defineConfig({
             runMode: 2,     // cypress run (CI): до 2 повторов упавшего теста
             openMode: 0,    // cypress open (локально): без повторов, чтобы видеть падения сразу
         },
+        expose: {
+            lang: "en",     // язык сайта по умолчанию; другой: --expose lang=de
+        },
 
         setupNodeEvents(on, config) {
             cypressGrepPlugin(config); // нужен для фильтрации файлов

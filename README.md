@@ -8,13 +8,18 @@
 The tests run against [practicesoftwaretesting.com](https://practicesoftwaretesting.com) (Toolshop),
 a public e-commerce site made for test automation practice. No local environment is needed.
 
+> **Runs locally only.** The demo site answers `403 Forbidden` to Cypress runs from GitHub-hosted
+> runners (all retries fail immediately on the first `cy.visit`), while the Playwright smoke suite
+> from the same runners passes. So this project has no CI workflow; the tests are run on my machine.
+
 ## Ported so far
 
 | Feature | Playwright | Cypress |
 |---|---|---|
 | Login: register via API, log in through the UI | ✅ | ✅ |
 | Login: register and log in via API (token in `localStorage`) | ✅ | ✅ |
-| Search (parametrized, with mocked "out of stock" response) | ✅ | in progress |
+| Search (parametrized: 1, 4 and 0 results) | ✅ | ✅ |
+| Search with mocked "out of stock" response | ✅ | in progress |
 | Place an order (registered user / guest) | ✅ | in progress |
 | Cart total calculation | ✅ | planned |
 | Accessibility (axe-core) | ✅ | planned (`cypress-axe`) |
@@ -63,6 +68,21 @@ npx cypress run --expose lang=de,grepTags=@smoke  # combined
 | `@a11y` | accessibility checks |
 
 Tags are implemented with the official [`@cypress/grep`](https://www.npmjs.com/package/@cypress/grep) plugin.
+Tags come from constants in `cypress/support/tags.ts`, so the plugin filters at run time:
+tests that do not match are reported as *pending*.
+
+## Retries
+
+`cypress run` retries a failed test up to 2 times, `cypress open` does not retry
+(`retries: { runMode: 2, openMode: 0 }`), so flaky behaviour is visible when debugging locally.
+
+## Findings
+
+- **The search API uses the HTTP `QUERY` method**, not `GET`
+  (`QUERY https://api.practicesoftwaretesting.com/products/search`, parameters in the body).
+  An intercept written as `cy.intercept('GET', ...)` never matches; the tests intercept by URL only.
+- **A failing `beforeEach` skips the rest of the suite** in Cypress (Playwright reports each test separately),
+  so one blocked page load shows up as 1 failed + N skipped.
 
 ## How the port maps Playwright concepts to Cypress
 
